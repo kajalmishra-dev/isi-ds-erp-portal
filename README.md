@@ -2,6 +2,8 @@
 
 > A full-stack academic ERP built with **FastAPI** + **PostgreSQL** on the backend and **Streamlit** on the frontend. Role-based access, JWT authentication, and a modern dark-themed UI.
 
+**Demo:** [docs/DEMO_VIDEOS.md](../docs/DEMO_VIDEOS.md) · **Run:** [docs/HOW_TO_RUN.md](../docs/HOW_TO_RUN.md)
+
 ---
 
 ## Table of Contents
