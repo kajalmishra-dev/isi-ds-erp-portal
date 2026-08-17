@@ -37,7 +37,7 @@ The backend exposes a RESTful API with JWT-protected endpoints. The frontend is 
 | Backend    | FastAPI, Python 3.11                |
 | Database   | PostgreSQL 16                       |
 | ORM        | SQLAlchemy 2.0                      |
-| Auth       | JWT (python-jose), bcrypt (passlib) |
+| Auth       | JWT (python-jose), bcrypt |
 | Frontend   | Streamlit ≥ 1.35                    |
 | Server     | Uvicorn                             |
 
@@ -169,8 +169,22 @@ isi-ds-erp-portal/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/Kajalmishra8/isi-ds-erp-portal.git
+git clone https://github.com/kajalmishra-dev/isi-ds-erp-portal.git
 cd isi-ds-erp-portal
+```
+
+### Docker (optional)
+
+```bash
+docker compose up --build
+```
+
+Then open http://localhost:8000/docs and http://localhost:8501
+
+```bash
+cd backend
+pip install -r requirements.txt -r requirements-dev.txt
+pytest -q
 ```
 
 ---
