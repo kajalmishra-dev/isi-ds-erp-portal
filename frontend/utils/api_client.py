@@ -8,10 +8,23 @@ import streamlit as st
 
 
 def _base_url() -> str:
-    return os.getenv(
-        "API_BASE_URL",
-        st.secrets.get("API_BASE_URL", "http://127.0.0.1:8000"),
-    )
+    in_docker = os.path.exists("/.dockerenv")
+    for key in ("ERP_API_BASE_URL", "API_BASE_URL"):
+        url = os.environ.get(key)
+        if not url:
+            continue
+        if in_docker and ("localhost" in url or "127.0.0.1" in url):
+            continue
+        return url.rstrip("/")
+    if in_docker:
+        return "http://api:8000"
+    try:
+        secret = st.secrets.get("API_BASE_URL")
+        if secret:
+            return str(secret).rstrip("/")
+    except Exception:
+        pass
+    return "http://127.0.0.1:8000"
 
 
 def _headers() -> dict[str, str]:

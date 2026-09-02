@@ -1,21 +1,25 @@
-#backend>app>schemas>marks.py
+from uuid import UUID
 
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, Field
+
 
 class MarksCreate(BaseModel):
-    std_id: str
-    exam_id: str
-    sub_id: str
-    marks_obtained: Optional[int]
+    std_id: UUID
+    exam_id: UUID
+    sub_id: UUID
+    marks_obtained: int = Field(ge=0)
+
 
 class MarksResponse(BaseModel):
-    mark_id: str
-    std_id: str
-    exam_id: str
-    sub_id: str
-    marks_obtained: Optional[int]
-    semester: Optional[int]
+    mark_id: UUID
+    std_id: UUID
+    exam_id: UUID
+    sub_id: UUID
+    marks_obtained: int
+    student_name: str | None = None
+    enroll_no: str | None = None
+    exam_name: str | None = None
+    subject_name: str | None = None
+    subject_code: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
