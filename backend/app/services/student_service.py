@@ -1,82 +1,65 @@
-#backend>app>services>student_service.py
-
-from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from app.models.student import Student
+from sqlalchemy.orm import Session, joinedload
+
 from app.models.exam import Exam
 from app.models.marks import Mark
+from app.models.student import Student
 from app.models.user import User
 
-# GRADE
-def get_grade(p: float) -> str:
-    if p >= 90:
+
+def get_grade(percentage: float) -> str:
+    if percentage >= 90:
         return "A+"
-    elif p >= 75:
+    if percentage >= 75:
         return "A"
-    elif p >= 60:
+    if percentage >= 60:
         return "B"
-    elif p >= 50:
+    if percentage >= 50:
         return "C"
-    else:
-        return "F"
+    return "F"
 
 
-# MARKSHEET
-def get_marksheet(db: Session, exam_id: str, current_user: User):
-# def get_marksheet(db, exam_id, current_user):
-# def get_marksheet(db: Session, enroll_no: str, exam_id: str, current_user: User):
-
-    # Student
-    # student = db.query(Student).filter(Student.enroll_no == enroll_no).first()
-    student = db.query(Student).filter(
-        Student.user_id == current_user.user_id
-    ).first()
-
-
+def get_marksheet(db: Session, exam_id: str, current_user: User) -> dict:
+    student = db.query(Student).filter(Student.user_id == current_user.user_id).first()
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
-    # Security
-    if str(student.user_id) != str(current_user.user_id):
-        raise HTTPException(status_code=403, detail="Access denied")
-
-    # Exam
     exam = db.query(Exam).filter(Exam.exam_id == exam_id).first()
     if not exam:
         raise HTTPException(status_code=404, detail="Exam not found")
 
-    # Marks
-    marks = db.query(Mark).filter(
-        Mark.std_id == student.std_id,
-        Mark.exam_id == exam_id
-    ).all()
-
+    marks = (
+        db.query(Mark)
+        .options(joinedload(Mark.subject))
+        .filter(Mark.std_id == student.std_id, Mark.exam_id == exam_id)
+        .all()
+    )
     if not marks:
-        raise HTTPException(status_code=404, detail="No marks found")
+        raise HTTPException(status_code=404, detail="No marks found for this exam")
 
-    # Calculation
     total_obtained = sum(m.marks_obtained for m in marks)
     total_max = sum(m.subject.max_marks for m in marks)
+    percentage = round((total_obtained / total_max) * 100, 2) if total_max else 0.0
 
-    percentage = round((total_obtained / total_max) * 100, 2) if total_max else 0
-
-    # Response
     return {
         "student": {
             "enroll_no": student.enroll_no,
             "name": f"{student.first_name} {student.last_name}",
-            "semester": student.semester
+            "semester": student.semester,
+            "email": student.email,
         },
         "exam": {
+            "exam_id": str(exam.exam_id),
             "name": exam.exam_name,
-            "year": exam.year
+            "year": exam.year,
+            "semester": exam.semester,
         },
         "marks": [
             {
                 "subject": m.subject.sub_name,
                 "code": m.subject.sub_code,
                 "obtained": m.marks_obtained,
-                "max": m.subject.max_marks
+                "max": m.subject.max_marks,
             }
             for m in marks
         ],
@@ -85,109 +68,18 @@ def get_marksheet(db: Session, exam_id: str, current_user: User):
             "total_max": total_max,
             "percentage": percentage,
             "grade": get_grade(percentage),
-            "result": "PASS" if percentage >= 40 else "FAIL"
-        }
+            "result": "PASS" if percentage >= 40 else "FAIL",
+        },
     }
 
 
-# EXAMS
-def get_exams_for_student(db: Session, current_user: User):
-
-    student = db.query(Student).filter(
-        Student.user_id == current_user.user_id
-    ).first()
-
+def get_exams_for_student(db: Session, current_user: User) -> list[Exam]:
+    student = db.query(Student).filter(Student.user_id == current_user.user_id).first()
     if not student:
         raise HTTPException(status_code=404, detail="Student profile not found")
-
-    return db.query(Exam).filter(
-        Exam.semester == student.semester,
-        Exam.is_active == True
-    ).all()
-
-
-
-
-
-
-
-
-
-
-# Old Code
-# # app/services/student_service.py
-
-# from sqlalchemy.orm import Session
-# from fastapi import HTTPException
-# from app.models.student import Student
-# from app.models.exam import Exam
-# from app.models.marks import Mark
-# from app.models.user import User
-
-# def get_marksheet(db: Session, enroll_no: str, exam_id: str, current_user: User):
-#     # Get student
-#     student = db.query(Student).filter(Student.enroll_no == enroll_no).first()
-#     if not student:
-#         raise HTTPException(status_code=404, detail='Student not found')
-
-#     # Security check
-#     if str(student.user_id) != str(current_user.user_id):
-#         raise HTTPException(status_code=403, detail='Access denied')
-
-#     # Get exam
-#     exam = db.query(Exam).filter(Exam.exam_id == exam_id).first()
-#     if not exam:
-#         raise HTTPException(status_code=404, detail='Exam not found')
-
-#     # Get marks
-#     marks = db.query(Mark).filter(
-#         Mark.std_id == student.std_id,
-#         Mark.exam_id == exam_id
-#     ).all()
-
-#     if not marks:
-#         raise HTTPException(status_code=404, detail='No marks found')
-
-#     # Aggregation
-#     total_obtained = sum(m.marks_obtained for m in marks)
-#     total_max = sum(m.subject.max_marks for m in marks)
-
-#     percentage = round((total_obtained / total_max) * 100, 2) if total_max else 0
-
-#     # Clean response
-#     return {
-#         "student": {
-#             "enroll_no": student.enroll_no,
-#             "name": f"{student.first_name} {student.last_name}",
-#             "semester": student.semester
-#         },
-#         "exam": {
-#             "name": exam.exam_name,
-#             "year": exam.year
-#         },
-#         "marks": [
-#             {
-#                 "subject": m.subject.sub_name,
-#                 "code": m.subject.sub_code,
-#                 "obtained": m.marks_obtained,
-#                 "max": m.subject.max_marks
-#             }
-#             for m in marks
-#         ],
-#         "summary": {
-#             "total_obtained": total_obtained,
-#             "total_max": total_max,
-#             "percentage": percentage
-#         }
-#     }
-
-# def get_exams_for_student(db: Session, current_user: User):
-#     student = db.query(Student).filter(Student.user_id == current_user.user_id).first()
-
-#     if not student:
-#         raise HTTPException(status_code=404, detail='Student profile not found')
-
-#     return db.query(Exam).filter(
-#         Exam.semester == student.semester,
-#         Exam.is_active == True
-#     ).all()
+    return (
+        db.query(Exam)
+        .filter(Exam.semester == student.semester, Exam.is_active.is_(True))
+        .order_by(Exam.year.desc(), Exam.exam_name)
+        .all()
+    )

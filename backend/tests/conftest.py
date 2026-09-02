@@ -5,47 +5,65 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+import app.models  # noqa: F401 — register all tables on Base.metadata
 from app.database import Base
 from app.dependencies import get_db
 from app.main import app
-from app.models import exam, marks, student, subject, user  # noqa: F401
+from app.models.faculty import Faculty
 from app.models.user import User
 
+engine = create_engine(
+    "sqlite+pysqlite:///:memory:",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-@pytest.fixture
-def client():
-    engine = create_engine(
-        "sqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+@pytest.fixture()
+def client(monkeypatch):
+    monkeypatch.setattr("app.main.engine", engine)
+    monkeypatch.setattr("app.main.seed_demo_data", lambda: None)
+    monkeypatch.setattr("app.main._relax_user_designation_check", lambda: None)
+
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
-
-    db = session_factory()
+    db = TestingSessionLocal()
+    admin = User(
+        username="admin",
+        password=bcrypt.hashpw(b"admin123", bcrypt.gensalt()).decode(),
+        designation="admin",
+    )
+    faculty_user = User(
+        username="faculty",
+        password=bcrypt.hashpw(b"faculty123", bcrypt.gensalt()).decode(),
+        designation="faculty",
+    )
+    db.add(admin)
+    db.add(faculty_user)
+    db.flush()
     db.add(
-        User(
-            username="admin",
-            password=bcrypt.hashpw(b"admin123", bcrypt.gensalt()).decode(),
-            designation="admin",
-            is_active=True,
+        Faculty(
+            user_id=faculty_user.user_id,
+            employee_code="FAC-01",
+            first_name="Arjun",
+            last_name="Nair",
+            email="arjun@isi-ds.edu",
+            department="Data Science",
         )
     )
     db.commit()
     db.close()
 
     def override_get_db():
-        database = session_factory()
+        session = TestingSessionLocal()
         try:
-            yield database
+            yield session
         finally:
-            database.close()
+            session.close()
 
     app.dependency_overrides[get_db] = override_get_db
-
     with TestClient(app) as test_client:
         yield test_client
-
     app.dependency_overrides.clear()
     Base.metadata.drop_all(bind=engine)
-    engine.dispose()

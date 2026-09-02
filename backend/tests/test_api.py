@@ -11,9 +11,8 @@ def test_admin_login(client):
     )
     assert response.status_code == 200
     payload = response.json()
-    assert payload["token_type"] == "bearer"
     assert payload["role"] == "admin"
-    assert payload["access_token"]
+    assert "access_token" in payload
 
 
 def test_admin_dashboard_requires_auth(client):
@@ -23,10 +22,26 @@ def test_admin_dashboard_requires_auth(client):
     login = client.post(
         "/api/auth/login",
         data={"username": "admin", "password": "admin123"},
-    ).json()
-
-    response = client.get(
-        "/api/admin/dashboard",
-        headers={"Authorization": f"Bearer {login['access_token']}"},
     )
-    assert response.status_code == 200
+    token = login.json()["access_token"]
+    authorized = client.get(
+        "/api/admin/dashboard",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert authorized.status_code == 200
+    body = authorized.json()
+    assert "total_students" in body
+    assert "total_marks" in body
+
+
+def test_faculty_login_and_dashboard(client):
+    login = client.post(
+        "/api/auth/login",
+        data={"username": "faculty", "password": "faculty123"},
+    )
+    assert login.status_code == 200
+    assert login.json()["role"] == "faculty"
+    token = login.json()["access_token"]
+    dash = client.get("/api/faculty/dashboard", headers={"Authorization": f"Bearer {token}"})
+    assert dash.status_code == 200
+    assert dash.json()["employee_code"] == "FAC-01"

@@ -1,26 +1,33 @@
-#backend>app>schemas>student.py
+from uuid import UUID
 
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, EmailStr, Field
 
-# Request schema
+
 class StudentCreate(BaseModel):
-    username: str
-    password: str
-    enroll_no: str
-    first_name: Optional[str]
-    last_name: Optional[str]
-    semester: Optional[int]
-    email: str
+    username: str = Field(min_length=3, max_length=50)
+    password: str = Field(min_length=6, max_length=128)
+    enroll_no: str = Field(min_length=2, max_length=30)
+    first_name: str = Field(min_length=1, max_length=50)
+    last_name: str = Field(min_length=1, max_length=50)
+    email: EmailStr
+    semester: int = Field(ge=1, le=12)
+    phone: str | None = None
 
-# Response schema
+
 class StudentResponse(BaseModel):
-    std_id: str
+    std_id: UUID
     enroll_no: str
-    first_name: Optional[str]
-    last_name: Optional[str]
-    semester: Optional[int]
+    first_name: str
+    last_name: str
     email: str
+    semester: int
+    phone: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
+
+
+class StudentListResponse(BaseModel):
+    total: int
+    page: int
+    limit: int
+    data: list[StudentResponse]
