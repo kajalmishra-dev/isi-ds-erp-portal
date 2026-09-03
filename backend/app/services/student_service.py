@@ -5,6 +5,7 @@ from app.models.exam import Exam
 from app.models.marks import Mark
 from app.models.student import Student
 from app.models.user import User
+from app.utils.ids import as_uuid
 
 
 def get_grade(percentage: float) -> str:
@@ -24,14 +25,15 @@ def get_marksheet(db: Session, exam_id: str, current_user: User) -> dict:
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
-    exam = db.query(Exam).filter(Exam.exam_id == exam_id).first()
+    exam_uuid = as_uuid(exam_id)
+    exam = db.query(Exam).filter(Exam.exam_id == exam_uuid).first()
     if not exam:
         raise HTTPException(status_code=404, detail="Exam not found")
 
     marks = (
         db.query(Mark)
         .options(joinedload(Mark.subject))
-        .filter(Mark.std_id == student.std_id, Mark.exam_id == exam_id)
+        .filter(Mark.std_id == student.std_id, Mark.exam_id == exam_uuid)
         .all()
     )
     if not marks:

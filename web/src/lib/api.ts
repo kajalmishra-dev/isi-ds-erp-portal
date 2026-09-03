@@ -7,6 +7,8 @@ export type LoginResult = {
   token_type: string
   role: Role
   username: string
+  tenant_id?: string | null
+  sandbox?: boolean
 }
 
 type RequestOptions = {
@@ -49,16 +51,28 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     try {
       data = JSON.parse(text)
     } catch {
-      throw new ApiError(text || 'Unexpected server response', response.status)
+      data = null
     }
   }
 
   if (!response.ok) {
-    const detail =
+    const detailFromJson =
       typeof data === 'object' && data && 'detail' in data
         ? String((data as { detail: unknown }).detail)
-        : `Request failed (${response.status})`
-    throw new ApiError(detail, response.status)
+        : null
+    const friendly =
+      response.status === 405
+        ? 'Login service is not reachable. Check that the API is running on port 8000.'
+        : response.status === 401 || response.status === 403
+          ? 'Invalid username or password.'
+          : response.status >= 500
+            ? 'Server error. Please try again in a moment.'
+            : `Request failed (${response.status})`
+    throw new ApiError(detailFromJson || friendly, response.status)
+  }
+
+  if (text && data === null) {
+    throw new ApiError('Unexpected server response', response.status)
   }
 
   return data as T
@@ -69,6 +83,14 @@ export const api = {
     request<LoginResult>('/api/auth/login', {
       method: 'POST',
       form: { username, password },
+    }),
+  demoStart: (role: Role, tenantId?: string | null) =>
+    request<LoginResult>('/api/auth/demo-start', {
+      method: 'POST',
+      body: {
+        role,
+        ...(tenantId ? { tenant_id: tenantId } : {}),
+      },
     }),
   get: <T>(path: string, token: string) => request<T>(path, { token }),
   post: <T>(path: string, token: string, body: unknown) =>

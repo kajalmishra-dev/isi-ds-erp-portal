@@ -51,11 +51,43 @@ export function FacultyDashboardPage() {
   }, [token, logout])
 
   return (
-    <AppShell title="Faculty desk" subtitle="Your course offerings and recent attendance activity.">
+    <AppShell
+      title="Faculty overview"
+      subtitle="Your courses this term — take attendance or open assignments."
+    >
       {error ? <div className="toast error">{error}</div> : null}
+
+      <div className="guide-banner">
+        <div>
+          <strong>{dash?.faculty_name ?? 'Faculty'}</strong>
+          <p>
+            {dash?.department ?? '—'} · Code <code>{dash?.employee_code ?? '—'}</code>
+          </p>
+        </div>
+      </div>
+
+      <div className="action-tiles">
+        <Link className="action-tile" to="/faculty/attendance">
+          <strong>Attendance</strong>
+          <span>Mark who came to class</span>
+        </Link>
+        <Link className="action-tile" to="/faculty/assignments">
+          <strong>Assignments</strong>
+          <span>Publish work & grade it</span>
+        </Link>
+        <Link className="action-tile" to="/faculty/notices">
+          <strong>Notices</strong>
+          <span>Message your students</span>
+        </Link>
+        <Link className="action-tile" to="/faculty/analytics">
+          <strong>Analytics</strong>
+          <span>See course trends</span>
+        </Link>
+      </div>
+
       <div className="stat-grid">
         <div className="stat-card">
-          <span>Courses this term</span>
+          <span>Courses</span>
           <strong>{dash?.offering_count ?? '—'}</strong>
         </div>
         <div className="stat-card">
@@ -68,36 +100,23 @@ export function FacultyDashboardPage() {
         </div>
         <div className="stat-card">
           <span>Department</span>
-          <strong style={{ fontSize: '1.1rem' }}>{dash?.department ?? '—'}</strong>
+          <strong className="stat-text">{dash?.department ?? '—'}</strong>
         </div>
       </div>
 
       <section className="panel" style={{ marginTop: 18 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-          <div>
-            <h3 style={{ margin: '0 0 6px' }}>{dash?.faculty_name ?? 'Faculty'}</h3>
-            <div style={{ color: 'var(--muted)' }}>Employee {dash?.employee_code}</div>
-          </div>
-          <Link className="btn btn-primary" to="/faculty/attendance">
-            Take attendance
-          </Link>
-          <Link className="btn btn-ghost" to="/faculty/assignments">
-            Assignments
-          </Link>
-          <Link className="btn btn-ghost" to="/faculty/notices">
-            Notices
-          </Link>
-        </div>
-        <div className="table-wrap" style={{ marginTop: 16 }}>
+        <h3 style={{ marginTop: 0 }}>Your courses</h3>
+        <p className="panel-help">Each row is a subject you teach this term.</p>
+        <div className="table-wrap">
           <table className="data">
             <thead>
               <tr>
                 <th>Code</th>
                 <th>Subject</th>
-                <th>Semester</th>
+                <th>Sem</th>
                 <th>Term</th>
                 <th>Sessions</th>
-                <th>Roster</th>
+                <th>Students</th>
               </tr>
             </thead>
             <tbody>
@@ -116,7 +135,7 @@ export function FacultyDashboardPage() {
               {!offerings.length ? (
                 <tr>
                   <td colSpan={6} className="empty">
-                    No course offerings assigned yet.
+                    No courses assigned yet.
                   </td>
                 </tr>
               ) : null}

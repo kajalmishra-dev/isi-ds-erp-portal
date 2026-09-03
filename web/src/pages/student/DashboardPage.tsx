@@ -23,6 +23,12 @@ type Dashboard = {
   overall_attendance_pct: number | null
 }
 
+function pctBadge(pct: number) {
+  if (pct >= 75) return 'ok'
+  if (pct >= 60) return 'warn'
+  return 'fail'
+}
+
 export function StudentDashboardPage() {
   const { token, logout } = useAuth()
   const [dash, setDash] = useState<Dashboard | null>(null)
@@ -44,8 +50,39 @@ export function StudentDashboardPage() {
   }, [token, logout])
 
   return (
-    <AppShell title="Student desk" subtitle="Semester snapshot — attendance, exams, and marksheet access.">
+    <AppShell
+      title="Your overview"
+      subtitle="Quick view of this semester — then jump to assignments or marksheet."
+    >
       {error ? <div className="toast error">{error}</div> : null}
+
+      <div className="guide-banner">
+        <div>
+          <strong>Hi {dash?.student_name ?? 'there'}</strong>
+          <p>
+            Enroll <code>{dash?.enroll_no ?? '—'}</code> · Semester {dash?.semester ?? '—'}
+          </p>
+        </div>
+      </div>
+
+      <div className="action-tiles">
+        <Link className="action-tile" to="/student/assignments">
+          <strong>Assignments</strong>
+          <span>Submit lab / homework work</span>
+        </Link>
+        <Link className="action-tile" to="/student/marksheet">
+          <strong>Marksheet</strong>
+          <span>View scores & download PDF</span>
+        </Link>
+        <Link className="action-tile" to="/student/notices">
+          <strong>Notices</strong>
+          <span>Campus announcements</span>
+        </Link>
+        <Link className="action-tile" to="/student/analytics">
+          <strong>My analytics</strong>
+          <span>Charts for attendance & marks</span>
+        </Link>
+      </div>
 
       <div className="stat-grid">
         <div className="stat-card">
@@ -63,63 +100,48 @@ export function StudentDashboardPage() {
           <strong>{dash?.exam_count ?? '—'}</strong>
         </div>
         <div className="stat-card">
-          <span>Marks on record</span>
+          <span>Marks recorded</span>
           <strong>{dash?.mark_count ?? '—'}</strong>
         </div>
       </div>
 
-      <div className="grid-2" style={{ marginTop: 18 }}>
-        <section className="panel">
-          <h3 style={{ marginTop: 0 }}>{dash?.student_name ?? 'Student'}</h3>
-          <p style={{ color: 'var(--muted)', marginTop: 0 }}>
-            Enroll {dash?.enroll_no ?? '—'} · Semester {dash?.semester ?? '—'}
-          </p>
-          <Link className="btn btn-primary" to="/student/marksheet">
-            Open marksheet
-          </Link>
-          <Link className="btn btn-ghost" to="/student/assignments" style={{ marginLeft: 8 }}>
-            Assignments
-          </Link>
-          <Link className="btn btn-ghost" to="/student/notices" style={{ marginLeft: 8 }}>
-            Notices
-          </Link>
-        </section>
-
-        <section className="panel">
-          <h3 style={{ marginTop: 0 }}>Attendance by subject</h3>
-          <div className="table-wrap">
-            <table className="data">
-              <thead>
-                <tr>
-                  <th>Code</th>
-                  <th>Subject</th>
-                  <th>Present</th>
-                  <th>%</th>
+      <section className="panel" style={{ marginTop: 18 }}>
+        <h3 style={{ marginTop: 0 }}>Attendance by subject</h3>
+        <p className="panel-help">Green ≥ 75% · Amber 60–74% · Red below 60%</p>
+        <div className="table-wrap">
+          <table className="data">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Subject</th>
+                <th>Present</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(dash?.attendance ?? []).map((row) => (
+                <tr key={row.offering_id}>
+                  <td>{row.sub_code}</td>
+                  <td>{row.sub_name}</td>
+                  <td>
+                    {row.present}/{row.sessions}
+                  </td>
+                  <td>
+                    <span className={`badge ${pctBadge(row.percentage)}`}>{row.percentage}%</span>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {(dash?.attendance ?? []).map((row) => (
-                  <tr key={row.offering_id}>
-                    <td>{row.sub_code}</td>
-                    <td>{row.sub_name}</td>
-                    <td>
-                      {row.present}/{row.sessions}
-                    </td>
-                    <td>{row.percentage}%</td>
-                  </tr>
-                ))}
-                {!dash?.attendance?.length ? (
-                  <tr>
-                    <td colSpan={4} className="empty">
-                      No attendance recorded for your semester yet.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </div>
+              ))}
+              {!dash?.attendance?.length ? (
+                <tr>
+                  <td colSpan={4} className="empty">
+                    No attendance recorded for your semester yet.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </AppShell>
   )
 }

@@ -104,7 +104,7 @@ export function StudentMarksheetPage() {
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
               <div>
-                <h3 style={{ margin: '0 0 6px', fontFamily: 'var(--display)', fontWeight: 500 }}>
+                <h3 style={{ margin: '0 0 6px', fontFamily: 'var(--font)', fontWeight: 700 }}>
                   {sheet.student.name}
                 </h3>
                 <div style={{ color: 'var(--muted)' }}>

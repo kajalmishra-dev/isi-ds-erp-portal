@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from datetime import date, datetime, timedelta, timezone
 from itertools import cycle
 
@@ -13,14 +14,17 @@ from app.database import SessionLocal
 from app.models.admin import Admin
 from app.models.assignment import Assignment, Submission
 from app.models.attendance import AttendanceRecord, AttendanceSession
+from app.models.demo_tenant import DemoTenant
 from app.models.exam import Exam
 from app.models.faculty import Faculty
 from app.models.marks import Mark
 from app.models.notice import Notice, NoticeRead
 from app.models.offering import CourseOffering
+from app.models.password_reset import PasswordResetToken
 from app.models.student import Student
 from app.models.subject import Subject
 from app.models.user import User
+from app.tenant_context import set_current_tenant
 from app.utils.password import hash_password
 
 # Public catalogue (also mirrored on Academics page)
@@ -67,7 +71,35 @@ STUDENT_ROSTER: list[tuple[str, str, str, str, str, int]] = [
 ]
 
 
+def _clear_tenant(db: Session, tenant_id: uuid.UUID) -> None:
+    db.query(NoticeRead).filter(NoticeRead.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(Notice).filter(Notice.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(Submission).filter(Submission.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(Assignment).filter(Assignment.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(AttendanceRecord).filter(AttendanceRecord.tenant_id == tenant_id).delete(
+        synchronize_session=False
+    )
+    db.query(AttendanceSession).filter(AttendanceSession.tenant_id == tenant_id).delete(
+        synchronize_session=False
+    )
+    db.query(CourseOffering).filter(CourseOffering.tenant_id == tenant_id).delete(
+        synchronize_session=False
+    )
+    db.query(Mark).filter(Mark.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(Student).filter(Student.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(Faculty).filter(Faculty.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(Admin).filter(Admin.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(Exam).filter(Exam.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(Subject).filter(Subject.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.query(PasswordResetToken).filter(PasswordResetToken.tenant_id == tenant_id).delete(
+        synchronize_session=False
+    )
+    db.query(User).filter(User.tenant_id == tenant_id).delete(synchronize_session=False)
+    db.commit()
+
+
 def _clear_demo(db: Session) -> None:
+    """Legacy helper: wipe everything (used only for schema rebuild)."""
     db.query(NoticeRead).delete()
     db.query(Notice).delete()
     db.query(Submission).delete()
@@ -81,7 +113,9 @@ def _clear_demo(db: Session) -> None:
     db.query(Admin).delete()
     db.query(Exam).delete()
     db.query(Subject).delete()
+    db.query(PasswordResetToken).delete()
     db.query(User).delete()
+    db.query(DemoTenant).delete()
     db.commit()
 
 
@@ -301,25 +335,54 @@ def _score_for(enroll: str, index: int, max_marks: int) -> int:
     return max(35, min(max_marks, base + jitter))
 
 
-def seed_demo_data() -> None:
-    try:
-        db: Session = SessionLocal()
-    except SQLAlchemyError:
-        return
+def seed_demo_data(
+    tenant_id: uuid.UUID | None = None,
+    db: Session | None = None,
+    *,
+    force: bool = False,
+) -> uuid.UUID | None:
+    """Seed one tenant. In DEMO_SANDBOX mode, startup seeds nothing unless tenant_id is given."""
+    owns_db = db is None
+    if owns_db:
+        try:
+            db = SessionLocal()
+        except SQLAlchemyError:
+            return None
 
+    assert db is not None
+    tid = tenant_id or uuid.UUID(settings.MASTER_TENANT_ID)
+
+    # Public sandbox deploy: do not create a shared world on boot.
+    if settings.DEMO_SANDBOX and tenant_id is None and not force:
+        if owns_db:
+            db.close()
+        return None
+
+    set_current_tenant(tid)
     try:
-        has_users = db.query(User).first() is not None
-        # Refresh when explicitly requested, or when thin legacy seed is detected
-        thin_legacy = has_users and db.query(Subject).count() < 10
-        if has_users and not settings.SEED_RESET and not thin_legacy:
-            return
-        if has_users and (settings.SEED_RESET or thin_legacy):
-            _clear_demo(db)
+        has_users = db.query(User).filter(User.tenant_id == tid).first() is not None
+        thin_legacy = has_users and db.query(Subject).filter(Subject.tenant_id == tid).count() < 10
+        if has_users and not force and not settings.SEED_RESET and not thin_legacy and tenant_id is None:
+            return tid
+        if has_users and (force or settings.SEED_RESET or thin_legacy or tenant_id is not None):
+            # Re-seed this tenant only (for a brand-new sandbox, has_users is False).
+            if has_users:
+                _clear_tenant(db, tid)
+
+        if db.query(DemoTenant).filter(DemoTenant.tenant_id == tid).first() is None:
+            db.add(
+                DemoTenant(
+                    tenant_id=tid,
+                    label="master" if str(tid) == settings.MASTER_TENANT_ID else "visitor",
+                )
+            )
+            db.flush()
 
         admin_user = User(
             username="admin",
             password=hash_password("admin123"),
             designation="admin",
+            tenant_id=tid,
         )
         db.add(admin_user)
         db.flush()
@@ -330,6 +393,7 @@ def seed_demo_data() -> None:
                 last_name="Saxena",
                 email="registrar@meridian.edu",
                 phone="+91-98765-11001",
+                tenant_id=tid,
             )
         )
 
@@ -345,6 +409,7 @@ def seed_demo_data() -> None:
                 username=username,
                 password=hash_password("faculty123"),
                 designation="faculty",
+                tenant_id=tid,
             )
             db.add(user)
             db.flush()
@@ -356,6 +421,7 @@ def seed_demo_data() -> None:
                 email=email,
                 phone="+91-98765-2200" + str(sem),
                 department=dept,
+                tenant_id=tid,
             )
             db.add(faculty)
             db.flush()
@@ -369,6 +435,7 @@ def seed_demo_data() -> None:
                 username=username,
                 password=hash_password("student123"),
                 designation="student",
+                tenant_id=tid,
             )
             db.add(user)
             db.flush()
@@ -380,13 +447,20 @@ def seed_demo_data() -> None:
                 email=email,
                 semester=semester,
                 phone=f"+91-98010-1{idx:03d}",
+                tenant_id=tid,
             )
             db.add(student)
             students.append(student)
         db.flush()
 
         subjects = [
-            Subject(sub_code=code, sub_name=name, max_marks=max_marks, semester=sem)
+            Subject(
+                sub_code=code,
+                sub_name=name,
+                max_marks=max_marks,
+                semester=sem,
+                tenant_id=tid,
+            )
             for code, name, max_marks, sem in DEMO_SUBJECTS
         ]
         db.add_all(subjects)
@@ -400,6 +474,7 @@ def seed_demo_data() -> None:
                     year=2026,
                     semester=sem,
                     is_active=True,
+                    tenant_id=tid,
                 )
             )
             exams.append(
@@ -408,6 +483,7 @@ def seed_demo_data() -> None:
                     year=2026,
                     semester=sem,
                     is_active=True,
+                    tenant_id=tid,
                 )
             )
         db.add_all(exams)
@@ -423,6 +499,7 @@ def seed_demo_data() -> None:
                 faculty_id=faculty.faculty_id,
                 academic_year=2026,
                 term="Odd" if sem % 2 else "Even",
+                tenant_id=tid,
             )
             db.add(offering)
             offerings.append(offering)
@@ -452,6 +529,7 @@ def seed_demo_data() -> None:
                         exam_id=mid.exam_id,
                         sub_id=subject.sub_id,
                         marks_obtained=mid_score,
+                        tenant_id=tid,
                     )
                 )
                 mark_rows.append(
@@ -460,12 +538,56 @@ def seed_demo_data() -> None:
                         exam_id=end.exam_id,
                         sub_id=subject.sub_id,
                         marks_obtained=end_score,
+                        tenant_id=tid,
                     )
                 )
 
         db.add_all(mark_rows)
         db.commit()
+        return tid
     except SQLAlchemyError:
         db.rollback()
+        return None
+    finally:
+        set_current_tenant(None)
+        if owns_db:
+            db.close()
+
+
+def create_visitor_sandbox(db: Session) -> uuid.UUID:
+    """Fresh private copy of the demo world for one visitor."""
+    tid = uuid.uuid4()
+    seeded = seed_demo_data(tenant_id=tid, db=db, force=True)
+    if seeded is None:
+        raise RuntimeError("Failed to seed visitor sandbox")
+    return tid
+
+
+def purge_stale_sandboxes(max_age_hours: int | None = None) -> int:
+    """Delete visitor sandboxes older than TTL. Master tenant is never removed."""
+    hours = max_age_hours if max_age_hours is not None else settings.DEMO_TENANT_TTL_HOURS
+    if hours <= 0:
+        return 0
+    master = uuid.UUID(settings.MASTER_TENANT_ID)
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+    removed = 0
+    try:
+        db = SessionLocal()
+    except SQLAlchemyError:
+        return 0
+    try:
+        stale = (
+            db.query(DemoTenant)
+            .filter(DemoTenant.tenant_id != master, DemoTenant.last_seen_at < cutoff)
+            .all()
+        )
+        for row in stale:
+            _clear_tenant(db, row.tenant_id)
+            db.query(DemoTenant).filter(DemoTenant.tenant_id == row.tenant_id).delete(
+                synchronize_session=False
+            )
+            db.commit()
+            removed += 1
+        return removed
     finally:
         db.close()

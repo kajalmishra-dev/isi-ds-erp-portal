@@ -6,12 +6,15 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.database import Base
+from app.models.tenant_mixin import TenantMixin
 
 
-class CourseOffering(Base):
+class CourseOffering(TenantMixin, Base):
     __tablename__ = "course_offerings"
     __table_args__ = (
-        UniqueConstraint("sub_id", "academic_year", "term", name="uq_offering_subject_term"),
+        UniqueConstraint(
+            "tenant_id", "sub_id", "academic_year", "term", name="uq_offering_tenant_subject_term"
+        ),
     )
 
     offering_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

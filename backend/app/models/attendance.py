@@ -6,9 +6,10 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.database import Base
+from app.models.tenant_mixin import TenantMixin
 
 
-class AttendanceSession(Base):
+class AttendanceSession(TenantMixin, Base):
     __tablename__ = "attendance_sessions"
 
     session_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -35,7 +36,7 @@ class AttendanceSession(Base):
     )
 
 
-class AttendanceRecord(Base):
+class AttendanceRecord(TenantMixin, Base):
     __tablename__ = "attendance_records"
     __table_args__ = (UniqueConstraint("session_id", "std_id", name="uq_attendance_session_student"),)
 
@@ -52,7 +53,7 @@ class AttendanceRecord(Base):
         nullable=False,
         index=True,
     )
-    status = Column(String(20), nullable=False, default="present")  # present|absent|late|excused
+    status = Column(String(20), nullable=False, default="present")
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     session = relationship("AttendanceSession", back_populates="records")

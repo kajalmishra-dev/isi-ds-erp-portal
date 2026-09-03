@@ -1,5 +1,4 @@
 import uuid
-from datetime import datetime
 
 from sqlalchemy import Column, DateTime, Float, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
@@ -7,9 +6,10 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.database import Base
+from app.models.tenant_mixin import TenantMixin
 
 
-class Assignment(Base):
+class Assignment(TenantMixin, Base):
     __tablename__ = "assignments"
 
     assignment_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -44,7 +44,7 @@ class Assignment(Base):
     )
 
 
-class Submission(Base):
+class Submission(TenantMixin, Base):
     __tablename__ = "submissions"
     __table_args__ = (UniqueConstraint("assignment_id", "std_id", name="uq_submission_assignment_student"),)
 

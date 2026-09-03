@@ -6,9 +6,10 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.database import Base
+from app.models.tenant_mixin import TenantMixin
 
 
-class Mark(Base):
+class Mark(TenantMixin, Base):
     __tablename__ = "marks"
     __table_args__ = (UniqueConstraint("std_id", "exam_id", "sub_id"),)
 

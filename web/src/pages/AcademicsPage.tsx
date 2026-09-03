@@ -28,13 +28,13 @@ export function AcademicsPage() {
       <main className="public-main" style={{ width: 'min(860px, calc(100% - 40px))' }}>
         <section className="panel stack">
           <div>
-            <p className="eyebrow">Programme catalogue</p>
-            <h1 style={{ margin: 0, fontFamily: 'var(--display)', fontWeight: 500, fontSize: '2rem' }}>
-              B.Tech CS & AI curriculum
+            <p className="eyebrow">Subject list</p>
+            <h1 style={{ margin: 0, fontFamily: 'var(--font)', fontWeight: 700, fontSize: '1.85rem' }}>
+              What students study
             </h1>
             <p style={{ color: 'var(--muted)' }}>
-              Sample subject map for the Meridian Campus ERP demo (AY 2026). Fictional programme data
-              only.
+              Demo B.Tech CS & AI subjects by semester. Sign in to use attendance, assignments, and
+              marks.
             </p>
           </div>
           <div className="table-wrap">
