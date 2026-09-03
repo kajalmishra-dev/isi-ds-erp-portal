@@ -45,3 +45,16 @@ def test_faculty_login_and_dashboard(client):
     dash = client.get("/api/faculty/dashboard", headers={"Authorization": f"Bearer {token}"})
     assert dash.status_code == 200
     assert dash.json()["employee_code"] == "FAC-01"
+
+
+def test_demo_start_creates_isolated_sandboxes(client, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "DEMO_SANDBOX", True)
+
+    a = client.post("/api/auth/demo-start", json={"role": "admin"})
+    b = client.post("/api/auth/demo-start", json={"role": "admin"})
+    assert a.status_code == 200, a.text
+    assert b.status_code == 200, b.text
+    assert a.json()["tenant_id"] != b.json()["tenant_id"]
+    assert a.json()["sandbox"] is True

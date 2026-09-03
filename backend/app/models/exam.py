@@ -5,11 +5,14 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
 from app.database import Base
+from app.models.tenant_mixin import TenantMixin
 
 
-class Exam(Base):
+class Exam(TenantMixin, Base):
     __tablename__ = "exams"
-    __table_args__ = (UniqueConstraint("exam_name", "year", "semester"),)
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "exam_name", "year", "semester", name="uq_exams_tenant_name"),
+    )
 
     exam_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     exam_name = Column(String(100), nullable=False)

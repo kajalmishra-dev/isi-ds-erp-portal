@@ -6,15 +6,16 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.database import Base
+from app.models.tenant_mixin import TenantMixin
 
 
-class Notice(Base):
+class Notice(TenantMixin, Base):
     __tablename__ = "notices"
 
     notice_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     title = Column(String(200), nullable=False)
     body = Column(Text, nullable=False)
-    audience = Column(String(20), nullable=False, default="all")  # all|admin|faculty|student|offering
+    audience = Column(String(20), nullable=False, default="all")
     offering_id = Column(
         UUID(as_uuid=True),
         ForeignKey("course_offerings.offering_id", ondelete="CASCADE"),
@@ -35,7 +36,7 @@ class Notice(Base):
     reads = relationship("NoticeRead", back_populates="notice", cascade="all, delete-orphan")
 
 
-class NoticeRead(Base):
+class NoticeRead(TenantMixin, Base):
     __tablename__ = "notice_reads"
     __table_args__ = (UniqueConstraint("notice_id", "user_id", name="uq_notice_read_user"),)
 

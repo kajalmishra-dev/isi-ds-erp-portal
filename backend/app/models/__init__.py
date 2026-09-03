@@ -1,6 +1,7 @@
 from app.models.admin import Admin
 from app.models.assignment import Assignment, Submission
 from app.models.attendance import AttendanceRecord, AttendanceSession
+from app.models.demo_tenant import DemoTenant
 from app.models.exam import Exam
 from app.models.faculty import Faculty
 from app.models.marks import Mark
@@ -17,6 +18,7 @@ __all__ = [
     "AttendanceRecord",
     "AttendanceSession",
     "CourseOffering",
+    "DemoTenant",
     "Exam",
     "Faculty",
     "Mark",

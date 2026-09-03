@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     APP_NAME: str = "Meridian Campus ERP"
     DEBUG: bool = False
     SEED_RESET: bool = False
+    DEMO_SANDBOX: bool = True
+    DEMO_TENANT_TTL_HOURS: int = 24
+    # Fixed personal/shared tenant when DEMO_SANDBOX is false
+    MASTER_TENANT_ID: str = "00000000-0000-4000-8000-000000000001"
     CORS_ORIGINS: str = (
         "http://localhost:8501,http://127.0.0.1:8501,"
         "http://localhost:5173,http://127.0.0.1:5173"

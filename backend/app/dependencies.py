@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 from app.models.user import User
+from app.tenant_context import set_current_tenant
 from app.utils.jwt_handler import decode_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
@@ -18,6 +19,7 @@ def get_db():
     try:
         yield db
     finally:
+        set_current_tenant(None)
         db.close()
 
 
@@ -47,6 +49,7 @@ def get_current_user(
             detail="Invalid credentials",
         )
 
+    set_current_tenant(user.tenant_id)
     return user
 
 

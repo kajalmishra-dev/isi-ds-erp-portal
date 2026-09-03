@@ -231,7 +231,7 @@ export function NoticesPage({
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
                 <div>
-                  <strong style={{ fontFamily: 'var(--display)', fontSize: '1.15rem' }}>
+                  <strong style={{ fontFamily: 'var(--font)', fontSize: '1.1rem', fontWeight: 700 }}>
                     {notice.title}
                   </strong>
                   <div style={{ color: 'var(--muted)', fontSize: '0.88rem', marginTop: 4 }}>

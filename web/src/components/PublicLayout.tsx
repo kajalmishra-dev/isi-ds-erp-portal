@@ -1,37 +1,46 @@
 import type { ReactNode } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 
-export function PublicLayout({ children }: { children?: ReactNode }) {
+export function PublicLayout({
+  children,
+  tone = 'default',
+}: {
+  children?: ReactNode
+  tone?: 'default' | 'home'
+}) {
   return (
-    <div className="public-site">
+    <div className={`public-site${tone === 'home' ? ' public-site-home' : ''}`}>
       <header className="site-header">
         <Link to="/" className="site-brand">
-          <span className="crest">MIC</span>
+          <span className="crest">ERP</span>
           <div>
-            <strong>Meridian Campus ERP</strong>
-            <small>B.Tech CS & AI · Academic Portal</small>
+            <strong>Campus Academic ERP</strong>
           </div>
         </Link>
         <nav className="site-nav">
           <NavLink to="/" end>
             Home
           </NavLink>
-          <NavLink to="/academics">Academics</NavLink>
-          <NavLink to="/login">Sign in</NavLink>
-          <NavLink to="/forgot-password">Forgot password</NavLink>
+          <NavLink to="/academics">Subjects</NavLink>
+          {tone !== 'home' ? (
+            <NavLink
+              to="/login"
+              className={({ isActive }) => `nav-cta${isActive ? ' active' : ''}`}
+            >
+              Sign in
+            </NavLink>
+          ) : null}
         </nav>
       </header>
       {children}
-      <footer className="site-footer">
-        <div>
-          <strong>Academic Records Office</strong>
-          <p>Meridian Institute of Computing · Demo academic ERP</p>
-        </div>
-        <div>
-          <p>Helpdesk: records@meridian.edu</p>
-          <p>Mon–Fri · 09:30–17:30 IST</p>
-        </div>
-      </footer>
+      {tone !== 'home' ? (
+        <footer className="site-footer site-footer-centered">
+          <p className="home-tagline">
+            Built for students, faculty, and admins -{' '}
+            <Link to="/login">sign in</Link> to explore.
+          </p>
+        </footer>
+      ) : null}
     </div>
   )
 }

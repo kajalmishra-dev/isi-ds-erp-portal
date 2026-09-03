@@ -6,6 +6,14 @@ class LoginResponse(BaseModel):
     token_type: str = "bearer"
     role: str
     username: str
+    tenant_id: str | None = None
+    sandbox: bool = False
+
+
+class DemoStartRequest(BaseModel):
+    role: str = Field(pattern="^(admin|faculty|student)$")
+    # Reuse an existing sandbox when continuing in the same browser
+    tenant_id: str | None = None
 
 
 class ForgotPasswordRequest(BaseModel):

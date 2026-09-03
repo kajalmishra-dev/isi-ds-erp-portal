@@ -5,9 +5,10 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
 from app.database import Base
+from app.models.tenant_mixin import TenantMixin
 
 
-class PasswordResetToken(Base):
+class PasswordResetToken(TenantMixin, Base):
     __tablename__ = "password_reset_tokens"
 
     token_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

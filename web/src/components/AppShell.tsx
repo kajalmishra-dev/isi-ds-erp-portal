@@ -3,38 +3,38 @@ import { NavLink } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 
 const adminLinks = [
-  { to: '/admin', label: 'Registrar desk', end: true },
-  { to: '/admin/analytics', label: 'Analytics' },
-  { to: '/admin/assistant', label: 'Assistant' },
-  { to: '/admin/students', label: 'Student roster' },
-  { to: '/admin/exams', label: 'Examinations' },
-  { to: '/admin/subjects', label: 'Subjects' },
-  { to: '/admin/marks', label: 'Post marks' },
-  { to: '/admin/notices', label: 'Notices' },
+  { to: '/admin', label: 'Overview', hint: 'Counts & recent marks', end: true },
+  { to: '/admin/students', label: 'Students', hint: 'Add / edit roster' },
+  { to: '/admin/exams', label: 'Exams', hint: 'Create exam sessions' },
+  { to: '/admin/subjects', label: 'Subjects', hint: 'Course catalogue' },
+  { to: '/admin/marks', label: 'Marks', hint: 'Enter student scores' },
+  { to: '/admin/notices', label: 'Notices', hint: 'Campus announcements' },
+  { to: '/admin/analytics', label: 'Analytics', hint: 'Charts & trends' },
+  { to: '/admin/assistant', label: 'Ask AI', hint: 'Questions from your data' },
 ]
 
 const facultyLinks = [
-  { to: '/faculty', label: 'Faculty desk', end: true },
-  { to: '/faculty/analytics', label: 'Analytics' },
-  { to: '/faculty/assistant', label: 'Assistant' },
-  { to: '/faculty/attendance', label: 'Attendance' },
-  { to: '/faculty/assignments', label: 'Assignments' },
-  { to: '/faculty/notices', label: 'Notices' },
+  { to: '/faculty', label: 'Overview', hint: 'Your courses', end: true },
+  { to: '/faculty/attendance', label: 'Attendance', hint: 'Mark present / absent' },
+  { to: '/faculty/assignments', label: 'Assignments', hint: 'Publish & grade work' },
+  { to: '/faculty/notices', label: 'Notices', hint: 'Class announcements' },
+  { to: '/faculty/analytics', label: 'Analytics', hint: 'Course insights' },
+  { to: '/faculty/assistant', label: 'Ask AI', hint: 'Questions from your data' },
 ]
 
 const studentLinks = [
-  { to: '/student', label: 'Student desk', end: true },
-  { to: '/student/analytics', label: 'My analytics' },
-  { to: '/student/assistant', label: 'Assistant' },
-  { to: '/student/assignments', label: 'Assignments' },
-  { to: '/student/marksheet', label: 'My marksheet' },
-  { to: '/student/notices', label: 'Notices' },
+  { to: '/student', label: 'Overview', hint: 'Semester snapshot', end: true },
+  { to: '/student/assignments', label: 'Assignments', hint: 'Submit your work' },
+  { to: '/student/marksheet', label: 'Marksheet', hint: 'View & download PDF' },
+  { to: '/student/notices', label: 'Notices', hint: 'Campus updates' },
+  { to: '/student/analytics', label: 'My analytics', hint: 'Attendance & scores' },
+  { to: '/student/assistant', label: 'Ask AI', hint: 'Questions from your data' },
 ]
 
-function workspaceLabel(role: string | null) {
-  if (role === 'admin') return 'Registrar workspace'
-  if (role === 'faculty') return 'Faculty workspace'
-  return 'Student workspace'
+function roleMeta(role: string | null) {
+  if (role === 'admin') return { title: 'Admin', badge: 'Registrar', workspace: 'Manage students, exams & marks' }
+  if (role === 'faculty') return { title: 'Faculty', badge: 'Teacher', workspace: 'Attendance, assignments & grading' }
+  return { title: 'Student', badge: 'Learner', workspace: 'Attendance, assignments & marksheet' }
 }
 
 export function AppShell({
@@ -48,29 +48,34 @@ export function AppShell({
 }) {
   const { role, username, logout } = useAuth()
   const links = role === 'admin' ? adminLinks : role === 'faculty' ? facultyLinks : studentLinks
+  const meta = roleMeta(role)
 
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand-mark">
-          <strong>Meridian ERP</strong>
-          <span>{workspaceLabel(role)}</span>
+          <strong>Campus ERP</strong>
+          <span>{meta.workspace}</span>
+          <span className={`role-pill role-${role ?? 'student'}`}>{meta.badge}</span>
         </div>
-        <nav className="nav-list">
+        <nav className="nav-list" aria-label="Main menu">
           {links.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
               end={link.end}
               className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+              title={link.hint}
             >
-              {link.label}
+              <span className="nav-label">{link.label}</span>
+              <span className="nav-hint">{link.hint}</span>
             </NavLink>
           ))}
         </nav>
-        <div style={{ marginTop: 'auto' }}>
-          <div style={{ color: 'var(--muted)', marginBottom: 10, fontSize: '0.92rem' }}>
-            Signed in as <strong style={{ color: 'var(--ink)' }}>{username}</strong>
+        <div className="sidebar-foot">
+          <div className="signed-as">
+            <span>Signed in as</span>
+            <strong>{username}</strong>
           </div>
           <button className="btn btn-ghost" type="button" onClick={logout}>
             Sign out
