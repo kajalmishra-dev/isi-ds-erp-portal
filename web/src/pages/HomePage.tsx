@@ -85,7 +85,7 @@ export function HomePage() {
             <form className="home-login" onSubmit={onSubmit}>
               <div className="home-login-head">
                 <h2>Sign in</h2>
-                <p>Each visitor gets a private copy of the demo data. Yours stays yours.</p>
+                <p>Try a demo role. Each visitor gets a private sandbox.</p>
               </div>
 
               <div className="home-role-row" role="group" aria-label="Quick role fill">
@@ -138,7 +138,7 @@ export function HomePage() {
               </button>
 
               <div className="home-login-demos">
-                <span>Demo access (same IDs in every private copy)</span>
+                <span>Demo access</span>
                 <p>
                   <code>admin</code> / <code>admin123</code>
                 </p>
