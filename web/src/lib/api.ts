@@ -1,11 +1,16 @@
 const envBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '')
-/** Production fallback when Vercel env was not set at build time. */
+/** Render production API — used for any non-local host. */
 const PROD_API = 'https://meridian-erp-api.onrender.com'
-const API_BASE =
-  envBase ||
-  (typeof window !== 'undefined' && /\.vercel\.app$/i.test(window.location.hostname)
-    ? PROD_API
-    : '')
+
+function resolveApiBase(): string {
+  if (envBase) return envBase
+  if (typeof window === 'undefined') return PROD_API
+  const host = window.location.hostname
+  if (host === 'localhost' || host === '127.0.0.1') return ''
+  return PROD_API
+}
+
+const API_BASE = resolveApiBase()
 
 export type Role = 'admin' | 'faculty' | 'student'
 
