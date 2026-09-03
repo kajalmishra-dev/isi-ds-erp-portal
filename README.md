@@ -1,39 +1,54 @@
 # Meridian Campus ERP
 
-Full-stack **academic ERP demo** (fictional institute — not affiliated with any real college):
-**FastAPI + PostgreSQL** API and a **React** institutional console.
+A full-stack academic ERP I built to explore how a campus portal actually feels end-to-end — not just screens, but roles, data, and the quiet workflows people use every day.
 
-JWT roles (`admin` / `faculty` / `student`): registrar manages roster / exams / subjects / marks;
-faculty take attendance and grade coursework; students view dashboards, marksheets, and the
-grounded academic assistant.
+This is a **demo product for a fictional institute**. It is not affiliated with any real college.
 
-## Quick start (Docker)
+---
+
+## What it does
+
+Three roles share one system:
+
+- **Admin** — students, subjects, exams, marks, notices  
+- **Faculty** — attendance, assignments, coursework  
+- **Student** — dashboard, marksheet, submissions, and a grounded academic assistant  
+
+Under the hood: **React + Vite**, **FastAPI**, **PostgreSQL**, JWT auth.
+
+On the public demo, each visitor gets a **private sandbox** — a fresh copy of the seed data. Your edits stay yours; the next person still sees the original world.
+
+---
+
+## Try the live demo
+
+- **App:** [isi-ds-erp-portal.vercel.app](https://isi-ds-erp-portal.vercel.app)  
+- **API health:** [meridian-erp-api.onrender.com/health](https://meridian-erp-api.onrender.com/health)
+
+| Role    | Username  | Password     |
+|---------|-----------|--------------|
+| Admin   | `admin`   | `admin123`   |
+| Faculty | `faculty` | `faculty123` |
+| Student | `student` | `student123` |
+
+**Heads-up:** the API runs on Render’s free tier, so the first request after idle time can take about a minute while the service wakes up. After that it should feel normal. Opening the health link once before signing in helps.
+
+---
+
+## Run locally
+
+### Docker (easiest)
 
 ```bash
 docker compose up --build
 ```
 
-- App: http://localhost:8501
-- API docs: http://localhost:8000/docs
+- App → http://localhost:8501  
+- API docs → http://localhost:8000/docs  
 
-### Demo credentials
+### Without Docker
 
-| Role | Username | Password |
-|------|----------|----------|
-| Admin | `admin` | `admin123` |
-| Faculty (Y1 programming) | `faculty` | `faculty123` |
-| Faculty (frontend) | `faculty2` | `faculty123` |
-| Faculty (AI & systems) | `faculty3` | `faculty123` |
-| Student (Y1 demo) | `student` | `student123` |
-
-More student logins: `isha`, `rohan`, `vihaan`, `yash`, `priya_s`, … (all `student123`).
-
-Compose currently sets `SEED_RESET=true` so each rebuild refreshes the demo dataset. Set it to
-`false` when you want data to persist across restarts.
-
-## Local development
-
-### API
+**API**
 
 ```bash
 cd backend
@@ -43,7 +58,7 @@ pip install -r requirements.txt -r requirements-dev.txt
 uvicorn app.main:app --reload
 ```
 
-### Web
+**Web**
 
 ```bash
 cd web
@@ -53,16 +68,26 @@ npm run dev
 
 Vite proxies `/api` to `http://127.0.0.1:8000`.
 
-## Architecture
+---
+
+## Project layout
 
 ```
-Browser (React) ──JWT──▶ FastAPI routers ──▶ services ──▶ SQLAlchemy ──▶ PostgreSQL
+backend/   FastAPI, SQLAlchemy, seed + sandbox tenants
+web/       React institutional UI
+docs/      Architecture notes
 ```
 
-## Notes
+Optional: set `OPENAI_API_KEY` on the API if you want LLM polish on the assistant. Without it, answers still come from database facts only (`grounded` mode).
 
-- Frontend lives in `web/` (React + Vite + TypeScript).
-- Legacy Streamlit UI remains under `frontend/` unused by Compose (archive candidate).
-- Empty databases are seeded on API startup. Compose is currently set to `SEED_RESET=true` for fresh demo data on rebuild; switch to `false` to persist edits.
-- Architecture notes: [docs/PHASE2_ARCHITECTURE.md](docs/PHASE2_ARCHITECTURE.md).
-- Optional LLM polish: set `OPENAI_API_KEY` in the API env. Without it, the assistant still answers from DB facts only (`mode: grounded`).
+---
+
+## Deploy notes
+
+- Frontend → **Vercel** (`web/`)  
+- API + Postgres → **Render** (`render.yaml`)  
+- Production builds expect `VITE_API_BASE_URL` pointing at the Render API (see `web/.env.production`)
+
+---
+
+Built as a learning and portfolio project — feedback welcome.
