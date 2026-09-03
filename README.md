@@ -1,66 +1,69 @@
 # Meridian Campus ERP
 
-A full-stack academic ERP I built to explore how a campus portal actually feels end-to-end — not just screens, but roles, data, and the quiet workflows people use every day.
+Full-stack academic ERP demo for a fictional campus. Built to show end-to-end product work: auth, roles, seeded data, and a UI people can actually click through.
 
-This is a **demo product for a fictional institute**. It is not affiliated with any real college.
+Not affiliated with any real college.
 
----
-
-## What it does
-
-Three roles share one system:
-
-- **Admin** — students, subjects, exams, marks, notices  
-- **Faculty** — attendance, assignments, coursework  
-- **Student** — dashboard, marksheet, submissions, and a grounded academic assistant  
-
-Under the hood: **React + Vite**, **FastAPI**, **PostgreSQL**, JWT auth.
-
-On the public demo, each visitor gets a **private sandbox** — a fresh copy of the seed data. Your edits stay yours; the next person still sees the original world.
+**Live demo:** [isi-ds-erp-portal.vercel.app](https://isi-ds-erp-portal.vercel.app)
 
 ---
 
-## Try the live demo
+## Overview
 
-- **App:** [isi-ds-erp-portal.vercel.app](https://isi-ds-erp-portal.vercel.app)  
-- **API health:** [meridian-erp-api.onrender.com/health](https://meridian-erp-api.onrender.com/health)
+| Layer | Stack |
+|-------|--------|
+| Web | React, Vite, TypeScript |
+| API | FastAPI, SQLAlchemy, JWT |
+| Data | PostgreSQL |
 
-| Role    | Username  | Password     |
-|---------|-----------|--------------|
-| Admin   | `admin`   | `admin123`   |
+**Roles**
+
+- **Admin** - roster, subjects, exams, marks, notices
+- **Faculty** - attendance, assignments, grading
+- **Student** - dashboard, marksheet, submissions, grounded academic assistant
+
+**Demo sandboxes** - each visitor gets a private copy of the seed world. Changes stay in that sandbox; new visitors still see clean original data.
+
+---
+
+## Try it
+
+| Role | Username | Password |
+|------|----------|----------|
+| Admin | `admin` | `admin123` |
 | Faculty | `faculty` | `faculty123` |
 | Student | `student` | `student123` |
 
-**Heads-up:** the API runs on Render’s free tier, so the first request after idle time can take about a minute while the service wakes up. After that it should feel normal. Opening the health link once before signing in helps.
+The API is on Render free tier. After idle time the first request can take ~30-60s while the service wakes. Opening `/health` on the API once before login helps.
 
 ---
 
-## Run locally
+## Quick start
 
-### Docker (easiest)
+### Docker
 
 ```bash
 docker compose up --build
 ```
 
-- App → http://localhost:8501  
-- API docs → http://localhost:8000/docs  
+| Service | URL |
+|---------|-----|
+| App | http://localhost:8501 |
+| API docs | http://localhost:8000/docs |
 
-### Without Docker
-
-**API**
+### Local (API + Vite)
 
 ```bash
+# API
 cd backend
 py -3.12 -m venv venv
-venv\Scripts\activate
+venv\Scripts\activate          # Windows
 pip install -r requirements.txt -r requirements-dev.txt
 uvicorn app.main:app --reload
 ```
 
-**Web**
-
 ```bash
+# Web
 cd web
 npm install
 npm run dev
@@ -70,24 +73,34 @@ Vite proxies `/api` to `http://127.0.0.1:8000`.
 
 ---
 
-## Project layout
+## Repo map
 
 ```
-backend/   FastAPI, SQLAlchemy, seed + sandbox tenants
-web/       React institutional UI
-docs/      Architecture notes
+backend/     FastAPI app, models, services, seed, tenant sandboxes
+web/         React UI (Vercel root)
+docs/        Architecture notes
+render.yaml  Render API + Postgres blueprint
 ```
-
-Optional: set `OPENAI_API_KEY` on the API if you want LLM polish on the assistant. Without it, answers still come from database facts only (`grounded` mode).
 
 ---
 
-## Deploy notes
+## Deploy
 
-- Frontend → **Vercel** (`web/`)  
-- API + Postgres → **Render** (`render.yaml`)  
-- Production builds expect `VITE_API_BASE_URL` pointing at the Render API (see `web/.env.production`)
+| Piece | Host | Notes |
+|-------|------|--------|
+| Frontend | Vercel | Root directory `web` |
+| API + DB | Render | Blueprint from `render.yaml` |
+| API URL | Env | `VITE_API_BASE_URL` (see `web/.env.production`) |
+| CORS | Render env | `CORS_ORIGINS` must include the Vercel origin |
 
 ---
 
-Built as a learning and portfolio project — feedback welcome.
+## Optional
+
+Set `OPENAI_API_KEY` on the API for LLM polish on the assistant. Without it, answers stay grounded in DB facts only.
+
+More detail: [docs/PHASE2_ARCHITECTURE.md](docs/PHASE2_ARCHITECTURE.md)
+
+---
+
+Portfolio / learning project. Issues and feedback welcome.
