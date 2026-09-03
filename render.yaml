@@ -11,6 +11,8 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
       - key: DATABASE_URL
         fromDatabase:
           name: meridian-erp-db
@@ -26,8 +28,7 @@ services:
       - key: SEED_RESET
         value: "false"
       - key: CORS_ORIGINS
-        sync: false
-        # Set after Vercel deploy, e.g. https://your-app.vercel.app
+        value: http://localhost:5173,http://127.0.0.1:5173
 
 databases:
   - name: meridian-erp-db
