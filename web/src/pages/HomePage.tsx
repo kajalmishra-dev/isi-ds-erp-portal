@@ -134,7 +134,7 @@ export function HomePage() {
               {error ? <div className="toast error">{error}</div> : null}
 
               <button className="btn btn-primary home-login-submit" type="submit" disabled={loading}>
-                {loading ? 'Opening your sandbox…' : 'Sign in'}
+                {loading ? 'Opening sandbox (first time can take ~1 min)…' : 'Sign in'}
               </button>
 
               <div className="home-login-demos">
