@@ -62,11 +62,11 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
         : null
     const friendly =
       response.status === 405
-        ? 'Login service is not reachable. Check that the API is running on port 8000.'
+        ? 'Login service is not reachable. The API URL may be missing on this deploy.'
         : response.status === 401 || response.status === 403
           ? 'Invalid username or password.'
-          : response.status >= 500
-            ? 'Server error. Please try again in a moment.'
+          : response.status === 0 || response.status >= 500
+            ? 'Server error. If this is the first visit, wait a minute for the API to wake up, then try again.'
             : `Request failed (${response.status})`
     throw new ApiError(detailFromJson || friendly, response.status)
   }

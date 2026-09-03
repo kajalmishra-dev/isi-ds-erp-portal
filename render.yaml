@@ -28,7 +28,7 @@ services:
       - key: SEED_RESET
         value: "false"
       - key: CORS_ORIGINS
-        value: https://isi-ds-erp-portal.vercel.app,http://localhost:5173,http://127.0.0.1:5173
+        value: https://isi-ds-erp-portal.vercel.app,https://meridian-erp-api.onrender.com,http://localhost:5173,http://127.0.0.1:5173
 
 databases:
   - name: meridian-erp-db
