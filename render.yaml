@@ -1,0 +1,36 @@
+# Render Blueprint — API + Postgres (pair with Vercel frontend)
+# https://dashboard.render.com/blueprints
+
+services:
+  - type: web
+    name: meridian-erp-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: meridian-erp-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: APP_NAME
+        value: Meridian Campus ERP
+      - key: DEMO_SANDBOX
+        value: "true"
+      - key: DEMO_TENANT_TTL_HOURS
+        value: "24"
+      - key: SEED_RESET
+        value: "false"
+      - key: CORS_ORIGINS
+        sync: false
+        # Set after Vercel deploy, e.g. https://your-app.vercel.app
+
+databases:
+  - name: meridian-erp-db
+    plan: free
+    databaseName: erp_portal
+    user: erp
