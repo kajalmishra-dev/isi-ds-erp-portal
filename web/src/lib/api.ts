@@ -1,4 +1,11 @@
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') || ''
+const envBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '')
+/** Production fallback when Vercel env was not set at build time. */
+const PROD_API = 'https://meridian-erp-api.onrender.com'
+const API_BASE =
+  envBase ||
+  (typeof window !== 'undefined' && /\.vercel\.app$/i.test(window.location.hostname)
+    ? PROD_API
+    : '')
 
 export type Role = 'admin' | 'faculty' | 'student'
 
